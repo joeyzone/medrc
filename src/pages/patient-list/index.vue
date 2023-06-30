@@ -1,0 +1,54 @@
+<template>
+  <div>
+    <el-table :data="tableData" style="width: 100%">
+      <el-table-column prop="realName" label="姓名" width="180" />
+      <el-table-column prop="idCard" label="证件号" width="180" />
+      <el-table-column prop="medRecId" label="病历号" width="180" />
+      <el-table-column label="操作" fixed="right">
+        <template #default="scope">
+          <el-button size="small" @click="handleView(scope.$index, scope.row)"
+            >查看</el-button
+          >
+        </template>
+      </el-table-column>
+    </el-table>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { onMounted, reactive, ref } from "vue";
+import { create } from "ipfs-http-client";
+
+import { encryptBlobToBlob, decryptBlobToBlob } from "@/assets/common/utils";
+import { setKey, getKey, axiosClient } from "@/assets/common/common";
+let tableData = ref([]);
+onMounted(async () => {
+  const ret = await axiosClient<any, IDTO<IDateType>>({
+    url: "/api/patientInfo/list",
+    method: "GET",
+  });
+  if (ret?.success) {
+    tableData.value = ret.data.list;
+  }
+});
+
+const handleView = async (_index, row) => {
+  // shareKey authAccount
+  const ret = await axiosClient<any, IDTO<IDateType>>({
+    url: "/api/apply/selfFilesInfo",
+    method: "POST",
+    data: {
+      fileCid: row.ipfsHash,
+    },
+    responseType: "blob",
+  });
+  const url = window.URL.createObjectURL(ret);
+  const alink = document.createElement("a");
+  alink.href = url;
+  alink.setAttribute("download", "12221.png");
+  document.body.appendChild(alink);
+  alink.click();
+};
+</script>
+
+<style lang="less"></style>
